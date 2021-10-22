@@ -61,9 +61,10 @@ class TargaImage
         bool Filter_Gaussian_N(unsigned int N);
         bool Filter_Edge();
         bool Filter_Enhance();
-
+        //add by myself
         void Filter_Gaussian_N_(unsigned char* img, int N);
         bool NPR_Paint();
+        //add by myself
         bool NPR_Paint_Layer(unsigned char* canvas, unsigned char* referenceImage, unsigned int r);
 
         bool Half_Size();

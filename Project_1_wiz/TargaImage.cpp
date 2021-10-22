@@ -1274,9 +1274,6 @@ bool TargaImage::Resize(float scale)
                 oq12 = x1 * old_width * 3 + y2 * 3,
                 oq21 = x2 * old_width * 3 + y1 * 3,
                 oq22 = x2 * old_width * 3 + y2 * 3;
-            /*
-            Bilinear_Interpolation(old_data[oq11 + 0], old_data[oq12 + 0], old_data[oq21 + 0], old_data[oq22 + 0], x1, x2, y1, y2, x, y);
-            */
 
             data[i * width * 4 + j * 4 + 0] = Bilinear_Interpolation(old_data[oq11 + 0], old_data[oq12 + 0], old_data[oq21 + 0], old_data[oq22 + 0], x1, x2, y1, y2, x, y);
             data[i * width * 4 + j * 4 + 1] = Bilinear_Interpolation(old_data[oq11 + 1], old_data[oq12 + 1], old_data[oq21 + 1], old_data[oq22 + 1], x1, x2, y1, y2, x, y);
