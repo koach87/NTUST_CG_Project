@@ -730,7 +730,6 @@ Draw_Map(int min_x, int min_y, int max_x, int max_y)
 }
 
 
-//範例code (但不能用glVertex QQ)
 void Maze::
 Draw_Wall(const float start[2], const float end[2], const float color[3], float aspect)
 {
@@ -763,29 +762,11 @@ Draw_Wall(const float start[2], const float end[2], const float color[3], float 
 			dots[i][j] /= abs(dots[i][3]);
 		}
 		glVertex2f(dots[i][0], dots[i][1]);
-		//glVertex4f(dots[i][0], dots[i][1], dots[i][2], dots[i][3]);
 	}
 	glEnd();
-
-	//example by 學長
-	/*float edge0[3] = { start[Y],0.0f,start[X] };
-	float edge1[3] = { end[Y],0.0f,end[X] };
-
-	glBegin(GL_POLYGON);
-	glColor3fv(color);
-
-	glVertex3f(edge0[X], 1.0f, edge0[Z]);
-	glVertex3f(edge1[X], 1.0f, edge1[Z]);
-	glVertex3f(edge1[X], -1.0f, edge1[Z]);
-	glVertex3f(edge0[X], -1.0f, edge0[Z]);
-	
-	glEnd();*/
 	
 }
 
-/*
-將
-*/
 
 void Maze::
 Draw_Cell(Cell *viewcell, LineSeg L, LineSeg R, float aspect) {
@@ -794,31 +775,11 @@ Draw_Cell(Cell *viewcell, LineSeg L, LineSeg R, float aspect) {
 	viewcell->foot_print = true;
 	float percent_L, percent_R;
 
-	//distance 
-	/*L.start[X] = viewer_posn[X] + 0.01f * delta_Lx / distance_L;
-	L.start[Y] = viewer_posn[Y] + 0.01f * delta_Ly / distance_L;
-	L.end[X] = viewer_posn[X] + 200.0f * delta_Lx / distance_L;
-	L.end[Y] = viewer_posn[Y] + 200.0f * delta_Ly / distance_L;
-
-	R.start[X] = viewer_posn[X] + 0.01f * delta_Rx / distance_R;
-	R.start[Y] = viewer_posn[Y] + 0.01f * delta_Ry / distance_R;
-	R.end[X] = viewer_posn[X] + 200.0f * delta_Rx / distance_R;
-	R.end[Y] = viewer_posn[Y] + 200.0f * delta_Ry / distance_R;*/
-
-	/*float delta_x = edge_i.end[X] - viewer_posn[X];
-	float delta_y = edge_i.end[Y] - viewer_posn[Y];
-	float distance = sqrt((edge_i.end[X] - viewer_posn[X]) * (edge_i.end[X] - viewer_posn[X]) + (edge_i.end[Y] - viewer_posn[Y]) * (edge_i.end[Y] - viewer_posn[Y]));
-	L.start[X] = viewer_posn[X] + 0.01f * delta_x / distance;
-	L.start[Y] = viewer_posn[Y] + 0.01f * delta_y / distance;
-	L.end[X] = viewer_posn[X] + 200.0f * delta_x / distance;
-	L.end[Y] = viewer_posn[Y] + 200.0f * delta_y / distance;*/
-
 	//測試 - 輸出全部
 	/*for (int i = 0; i < 4; i++) {
 		LineSeg edge_i = LineSeg(viewcell->edges[i]);
 		Draw_Wall(edge_i.start, edge_i.end, viewcell->edges[i]->color, aspect);
 	}*/
-	std::cout << "*********************start *********************\n";
 
 	for (int i = 0; i < 4; i++) {
 		//edges[i] 的線段 start[X],start[Y],end[X],end[Y]
@@ -827,13 +788,10 @@ Draw_Cell(Cell *viewcell, LineSeg L, LineSeg R, float aspect) {
 		//到牆上的比例 若在0~1間代表有交點
 		percent_L = L.Cross_Param(edge_i);
 		percent_R = R.Cross_Param(edge_i);
-		/*std::cout << "---origin---\n";
-		std::cout << "viewer_x : " << viewer_posn[X] << "\t y : " << viewer_posn[Y] << "\n";
-		std::cout << "Lx : " << L.end[X] << "\t Ly : " << L.end[Y] << "\n";
-		std::cout << "Rx : " << R.end[X] << "\t Ry : " << L.end[Y] << "\n";
-		std::cout << "Edgex : " << edge_i.end[X] << "\t Edgey : " << edge_i.end[Y] << "\n";*/
+
 		//若edge[i]的延伸和Frustum沒有交點則處理下個邊。
 		if (!((percent_L > 0 && percent_L < 1) || (percent_R > 0 && percent_R < 1)))continue;
+		
 		//edge[i]的延伸與Frustum_L有交點 
 		if (percent_L < 1 && percent_L>0) {
 
@@ -875,100 +833,52 @@ Draw_Cell(Cell *viewcell, LineSeg L, LineSeg R, float aspect) {
 			}
 		}
 
-		/*std::cout << "---切完線段---\n";
-		std::cout << "Edge_start_xy :( " << edge_i.start[X] << ",  " << edge_i.start[Y] << ")\n";
-		std::cout << "Edge_end_xy :( " << edge_i.end[X] << ",  " << edge_i.end[Y] << ")\n";*/
 		//若牆壁為非透明，畫牆。
 		if (viewcell->edges[i]->opaque) {
-				Draw_Wall(edge_i.start, edge_i.end, viewcell->edges[i]->color, aspect);
+			Draw_Wall(edge_i.start, edge_i.end, viewcell->edges[i]->color, aspect);
 		}
 		//若牆壁為透明，將Frustum更新為該線段。
 		else {
 			if (!(viewcell->edges[i]->Neighbor(viewcell)->foot_print)) {
-				//設中點，判斷左右為start or end。
+
+				//利用座標方式將frustum更新
+				float delta_xs = edge_i.start[X] - viewer_posn[X];
+				float delta_ys = edge_i.start[Y] - viewer_posn[Y];
+				float delta_xe = edge_i.end[X] - viewer_posn[X];
+				float delta_ye = edge_i.end[Y] - viewer_posn[Y];
+				float dis_to_start = sqrtf(delta_xs * delta_xs + delta_ys * delta_ys);
+				float dis_to_end = sqrtf(delta_xe * delta_xe + delta_ye * delta_ye);
+
+				//製作viewer_posn到edge_i的起點線段
+				LineSeg S(
+					viewer_posn[X] + Near * delta_xs / dis_to_start,
+					viewer_posn[Y] + Near * delta_ys / dis_to_start,
+					viewer_posn[X] + Far * delta_xs / dis_to_start,
+					viewer_posn[Y] + Far * delta_ys / dis_to_start
+				);
+
+				//製作viewer_posn到edge_i的終點線段
+				LineSeg E(
+					viewer_posn[X] + Near * delta_xe / dis_to_end,
+					viewer_posn[Y] + Near * delta_ye / dis_to_end,
+					viewer_posn[X] + Far * delta_xe / dis_to_end,
+					viewer_posn[Y] + Far * delta_ye / dis_to_end
+				);
+
+				//設中點，判斷Start和End在左邊還是右邊。
 				float edge_mid[2] = {
 					(edge_i.start[X] + edge_i.end[X]) * 0.5,
 					(edge_i.start[Y] + edge_i.end[Y]) * 0.5
 				};
-				float delta_X1 = edge_i.start[X] - viewer_posn[X];
-				float delta_Y1 = edge_i.start[Y] - viewer_posn[Y];
-				float delta_X2 = edge_i.end[X] - viewer_posn[X];
-				float delta_Y2 = edge_i.end[Y] - viewer_posn[Y];
 
-				float x_dot_y = delta_X1 * delta_X2 + delta_Y1 * delta_Y2;
-				float dis_x_times_y = sqrt(delta_X1 * delta_X1 + delta_Y1 * delta_Y1) * sqrt(delta_X2 * delta_X2 + delta_Y2 * delta_Y2);
-				float theta_of_edge_i = acosf(x_dot_y / dis_x_times_y);
-				std::cout <<"********************" << theta_of_edge_i * 180.0 / 3.14159265 << std::endl;
-				float viewer_ndir = atan2f(edge_mid[Y]- viewer_posn[Y], edge_mid[X]- viewer_posn[X]);
-				std::cout << "********************" << viewer_ndir * 180.0 / 3.14159265 << std::endl;
-				std::cout << "********************" << viewer_dir << std::endl;
-				LineSeg n_R(
-					viewer_posn[Maze::X] + Near * cos(Maze::To_Radians(viewer_ndir - (theta_of_edge_i) * 1 / 2)),
-					viewer_posn[Maze::Y] + Near * sin(Maze::To_Radians(viewer_ndir - (theta_of_edge_i) * 1 / 2)),
-					viewer_posn[Maze::X] + Far * cos(Maze::To_Radians(viewer_ndir - (theta_of_edge_i) * 1 / 2)),
-					viewer_posn[Maze::Y] + Far * sin(Maze::To_Radians(viewer_ndir - (theta_of_edge_i) * 1 / 2))
-				);
-
-				LineSeg n_L(
-					viewer_posn[Maze::X] + Near * cos(Maze::To_Radians(viewer_ndir + (theta_of_edge_i) * 1 / 2)),
-					viewer_posn[Maze::Y] + Near * sin(Maze::To_Radians(viewer_ndir + (theta_of_edge_i) * 1 / 2)),
-					viewer_posn[Maze::X] + Far * cos(Maze::To_Radians(viewer_ndir + (theta_of_edge_i) * 1 / 2)),
-					viewer_posn[Maze::Y] + Far * sin(Maze::To_Radians(viewer_ndir + (theta_of_edge_i) * 1 / 2))
-				);
-
-				////"F_L\ 中點 / F_R "，F_L的線段設為位置至線段起點延伸(長度為Far)，F_R的線段設為位置至線段終點延伸(長度為Far)
-				//if (L.Point_Side(edge_mid[X], edge_mid[Y])==Edge::RIGHT&& R.Point_Side(edge_mid[X], edge_mid[Y]) == Edge::LEFT) {
-				//	//std::cout << "L---edge---R\n";
-
-				//	float delta_Lx = edge_i.start[X] - viewer_posn[X];
-				//	float delta_Ly = edge_i.start[Y] - viewer_posn[Y];
-				//	float distance_L = (float)sqrt(delta_Lx * delta_Lx + delta_Ly * delta_Ly);
-
-				//	L.start[X] = viewer_posn[X] + 0.01f * delta_Lx / distance_L;
-				//	L.start[Y] = viewer_posn[Y] + 0.01f * delta_Ly / distance_L;
-				//	L.end[X] = viewer_posn[X] + 200.0f * delta_Lx / distance_L;
-				//	L.end[Y] = viewer_posn[Y] + 200.0f * delta_Ly / distance_L;
-
-				//	float delta_Rx = edge_i.end[X] - viewer_posn[X];
-				//	float delta_Ry = edge_i.end[Y] - viewer_posn[Y];
-				//	float distance_R = (float)sqrt(delta_Rx * delta_Rx + delta_Ry * delta_Ry);
-				//	R.start[X] = viewer_posn[X] + 0.01f * delta_Rx / distance_R;
-				//	R.start[Y] = viewer_posn[Y] + 0.01f * delta_Ry / distance_R;
-				//	R.end[X] = viewer_posn[X] + 200.0f * delta_Rx / distance_R;
-				//	R.end[Y] = viewer_posn[Y] + 200.0f * delta_Ry / distance_R;
-				//}
-				////"F_R\ 中點 / F_L "，F_L的線段設為位置至線段終點延伸(長度為Far)，F_R的線段設為位置至線段起點延伸(長度為Far)
-				//else if ((L.Point_Side(edge_mid[0], edge_mid[1]) == Edge::LEFT&&R.Point_Side(edge_mid[0], edge_mid[1]) == Edge::RIGHT)) {
-				//	//std::cout << "RL\n";
-				//	float delta_Lx = edge_i.end[X] - viewer_posn[X];
-				//	float delta_Ly = edge_i.end[Y] - viewer_posn[Y];
-				//	float distance_L = (float)sqrt(delta_Lx * delta_Lx + delta_Ly * delta_Ly);
-				//	L.start[X] = viewer_posn[X] + 0.01f * delta_Lx / distance_L;
-				//	L.start[Y] = viewer_posn[Y] + 0.01f * delta_Ly / distance_L;
-				//	L.end[X] = viewer_posn[X] + 200.0f * delta_Lx / distance_L;
-				//	L.end[Y] = viewer_posn[Y] + 200.0f * delta_Ly / distance_L;
-
-				//	float delta_Rx = edge_i.start[X] - viewer_posn[X];
-				//	float delta_Ry = edge_i.start[Y] - viewer_posn[Y];
-				//	float distance_R = (float)sqrt(delta_Rx * delta_Rx + delta_Ry * delta_Ry);
-				//	R.start[X] = viewer_posn[X] + 0.01f * delta_Rx / distance_R;
-				//	R.start[Y] = viewer_posn[Y] + 0.01f * delta_Ry / distance_R;
-				//	R.end[X] = viewer_posn[X] + 200.0f * delta_Rx / distance_R;
-				//	R.end[Y] = viewer_posn[Y] + 200.0f * delta_Ry / distance_R;
-
-				//} 
-				//std::cout << "---透明牆---\n";
-				//std::cout << "Lx : " << L.end[X] << "\t Ry : " << L.end[Y] << "\n";
-				//std::cout << "Rx : " << R.end[X] << "\t Ry : " << L.end[Y] << "\n";
-				//std::cout << "edge_mid_x : " << edge_mid[X] << "\t edge_mid_y : " << edge_mid[Y] << "\n";
-				//std::cout << "Edge_start_xy :( " << edge_i.start[X] << ",  : " << edge_i.start[Y] << ")\n";
-				//std::cout << "Edge_end_xy :( " << edge_i.end[X] << ",  : " << edge_i.end[Y] << ")\n";
-				Draw_Cell(viewcell->edges[i]->Neighbor(viewcell),n_L, n_R, aspect);
+				//判斷edge_i的中點在End線段的左邊還右邊，更新frustum更新。
+				if (E.Point_Side(edge_mid[X], edge_mid[Y]) == Edge::LEFT) {
+					Draw_Cell(viewcell->edges[i]->Neighbor(viewcell), S, E, aspect);
+				}
+				else Draw_Cell(viewcell->edges[i]->Neighbor(viewcell), E, S, aspect);
 			}
 		}
-
 	}
-	std::cout << "*********************done *********************\n";
 }
 
 
@@ -986,34 +896,6 @@ Draw_View(const float focal_dist, float aspect)
 	//###################################################################
 	// TODO
 	// The rest is up to you!
-	//###################################################################
-	//gluLookAt__, gluPerspective__, NorMatrix_
-
-	//glMatrixMode(GL_PROJECTION);
-	//glLoadIdentity();
-	//glMatrixMode(GL_MODELVIEW);
-	//glLoadIdentity();
-	//glClear(GL_DEPTH_BUFFER_BIT);
-	//glEnable(GL_DEPTH_TEST);
-
-	//float viewer_pos[3] = { viewer_posn[Y], 0.0f, viewer_posn[X] };
-
-	//for (int i = 0; i < (int)this->num_edges; i++) {		
-	//	float edge_start[2] = {
-	//		this->edges[i]->endpoints[Edge::START]->posn[Vertex::X],
-	//		this->edges[i]->endpoints[Edge::START]->posn[Vertex::Y]
-	//	};
-
-	//	float edge_end[2] = {
-	//	this->edges[i]->endpoints[Edge::END]->posn[Vertex::X],
-	//	this->edges[i]->endpoints[Edge::END]->posn[Vertex::Y]
-	//	};
-
-	//	//float color[3] = { this->edges[i]->color[0],this->edges[i]->color[1], this->edges[i]->color[2] };
-	//	if (this->edges[i]->opaque) {
-	//		Draw_Wall(edge_start, edge_end, this->edges[i]->color,aspect);
-	//	}
-	//}
 	//###################################################################
 
 	glMatrixMode(GL_PROJECTION);
